@@ -1,6 +1,6 @@
 # Template information section
-name: swifty_viper_extended
-summary: Customized extended swifty_viper template
+name: swifty_viper_extended_arkit
+summary: Customized extended swifty_viper template for arkit
 author: Alexander Asinenko
 version: 0.0.1
 license: "MIT"

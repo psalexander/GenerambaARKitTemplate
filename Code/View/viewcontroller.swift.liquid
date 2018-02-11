@@ -12,6 +12,8 @@ class {{ module_info.name }}ViewController: UIViewController {
 
     var output: {{ module_info.name }}ViewOutput!
 
+    @IBOutlet weak var sceneView: ARSCNView!
+
     static func storyboardInstance() -> {{ module_info.name }}ViewController? {
         let viewController = UIStoryboard(name: String(describing: self), bundle: nil).instantiateInitialViewController() as? {{ module_info.name }}ViewController
         return viewController
@@ -19,7 +21,203 @@ class {{ module_info.name }}ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        sceneView.delegate = self
+        sceneView.showsStatistics = true
+        sceneView.scene = SCNScene()
+        sceneView.autoenablesDefaultLighting = true
+
+//        if let scene = SCNScene(named: "art.scnassets/name.scn") {
+//            if let node = compassScene.rootNode.childNode(withName: "name", recursively: true) {
+//                sceneView.scene.rootNode.addChildNode(node)
+//            }
+//        }
+
         output.viewIsReady()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = [.horizontal, .vertical]
+
+        sceneView.session.run(configuration)
+        sceneView.debugOptions = [ARSCNDebugOptions.showWorldOrigin, ARSCNDebugOptions.showFeaturePoints]
+        UIApplication.shared.isIdleTimerDisabled = true
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        sceneView.session.pause()
+        UIApplication.shared.isIdleTimerDisabled = false
+    }
+}
+
+extension {{ module_info.name }}ViewController: ARSCNViewDelegate {
+
+    /**
+    Implement this to provide a custom node for the given anchor.
+
+    @discussion This node will automatically be added to the scene graph.
+    If this method is not implemented, a node will be automatically created.
+    If nil is returned the anchor will be ignored.
+    @param renderer The renderer that will render the scene.
+    @param anchor The added anchor.
+    @return Node that will be mapped to the anchor or nil.
+    */
+    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
+        print("renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode?")
+        return nil
+    }
+
+    /**
+    Called when a new node has been mapped to the given anchor.
+
+    @param renderer The renderer that will render the scene.
+    @param node The node that maps to the anchor.
+    @param anchor The added anchor.
+    */
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        print("renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor)")
+
+    }
+
+    /**
+    Called when a node will be updated with data from the given anchor.
+
+    @param renderer The renderer that will render the scene.
+    @param node The node that will be updated.
+    @param anchor The anchor that was updated.
+    */
+    func renderer(_ renderer: SCNSceneRenderer, willUpdate node: SCNNode, for anchor: ARAnchor) {
+        print("renderer(_ renderer: SCNSceneRenderer, willUpdate node: SCNNode, for anchor: ARAnchor)")
+    }
+
+    /**
+    Called when a node has been updated with data from the given anchor.
+
+    @param renderer The renderer that will render the scene.
+    @param node The node that was updated.
+    @param anchor The anchor that was updated.
+    */
+    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        //print("renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor)")
+    }
+
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+
+    }
+
+    /**
+    Called when a mapped node has been removed from the scene graph for the given anchor.
+
+    @param renderer The renderer that will render the scene.
+    @param node The node that was removed.
+    @param anchor The anchor that was removed.
+    */
+    func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
+        print("renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor)")
+    }
+
+    /**
+    This is called when a session fails.
+
+    @discussion On failure the session will be paused.
+    @param session The session that failed.
+    @param error The error being reported (see ARError.h).
+    */
+    func session(_ session: ARSession, didFailWithError error: Error) {
+        print("session(_ session: ARSession, didFailWithError error: Error)")
+    }
+
+    /**
+    This is called when the camera’s tracking state has changed.
+
+    @param session The session being run.
+    @param camera The camera that changed tracking states.
+    */
+    func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
+        print("session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera)")
+    }
+
+    /**
+    This is called when a session is interrupted.
+
+    @discussion A session will be interrupted and no longer able to track when
+    it fails to receive required sensor data. This happens when video capture is interrupted,
+    for example when the application is sent to the background or when there are
+    multiple foreground applications (see AVCaptureSessionInterruptionReason).
+    No additional frame updates will be delivered until the interruption has ended.
+    @param session The session that was interrupted.
+    */
+    func sessionWasInterrupted(_ session: ARSession) {
+        print("sessionWasInterrupted(_ session: ARSession)")
+    }
+
+    /**
+    This is called when a session interruption has ended.
+
+    @discussion A session will continue running from the last known state once
+    the interruption has ended. If the device has moved, anchors will be misaligned.
+    To avoid this, some applications may want to reset tracking (see ARSessionRunOptions).
+    @param session The session that was interrupted.
+    */
+    func sessionInterruptionEnded(_ session: ARSession) {
+        print("sessionInterruptionEnded(_ session: ARSession)")
+        sceneView.session.run(session.configuration!, options: [.resetTracking, .removeExistingAnchors])
+    }
+
+    /**
+    This is called when the session outputs a new audio sample buffer.
+
+    @param session The session being run.
+    @param audioSampleBuffer The captured audio sample buffer.
+    */
+    func session(_ session: ARSession, didOutputAudioSampleBuffer audioSampleBuffer: CMSampleBuffer) {
+        print("session(_ session: ARSession, didOutputAudioSampleBuffer audioSampleBuffer: CMSampleBuffer)")
+    }
+}
+
+extension {{ module_info.name }}ViewController: ARSessionDelegate {
+
+    /**
+    This is called when a new frame has been updated.
+
+    @param session The session being run.
+    @param frame The frame that has been updated.
+    */
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        print("session(_ session: ARSession, didUpdate frame: ARFrame)")
+    }
+
+    /**
+    This is called when new anchors are added to the session.
+
+    @param session The session being run.
+    @param anchors An array of added anchors.
+    */
+    func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
+        print("session(_ session: ARSession, didAdd anchors: [ARAnchor])")
+    }
+
+    /**
+    This is called when anchors are updated.
+
+    @param session The session being run.
+    @param anchors An array of updated anchors.
+    */
+    func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
+        print("session(_ session: ARSession, didUpdate anchors: [ARAnchor])")
+    }
+
+    /**
+    This is called when anchors are removed from the session.
+
+    @param session The session being run.
+    @param anchors An array of removed anchors.
+    */
+    func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
+        print("session(_ session: ARSession, didRemove anchors: [ARAnchor])")
     }
 }
 
